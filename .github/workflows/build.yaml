@@ -1,0 +1,34 @@
+name: DevOps Build
+
+##
+# Put required ServiceNow Info in Environment Details
+##
+env:
+  commits: '[{"commitId": "${{ github.sha }}" }]'
+  repository: "${{ github.repository }}"
+  run_id: "${{ github.run_number }}"
+  job: ${{ github.job }}
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+##
+# Every job will require a notification to be sent to ServiceNow, change control 
+# is determined on the platform. 
+##
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: send artifacts to servicenow
+        uses: rapdev-io/sn-devops-artifact@v2.0.1
+        with:
+          instance-name: ${{ secrets.INSTANCE_NAME }}
+          devops-integration-user-name: ${{ secrets.DEVOPS_INTEGRATION_USER_NAME }}
+          devops-integration-user-pass: ${{ secrets.DEVOPS_INTEGRATION_USER_PASS }}
+          tool-id: ${{ secrets.TOOL_ID }}
+          context-github: ${{ toJSON(github) }}
+          artifacts: '[{"name": "snc-devops-demo.war", "version": "1.${{env.run_id}}.0", "semanticVersion": "1.${{env.run_id}}.0", "repositoryName": "${{env.repository}}"}]'
+          
